@@ -1,28 +1,18 @@
-import { Wireframe, useAnimations, useGLTF } from "@react-three/drei";
-import { useEffect, useRef } from "react";
+import { useGLTF } from "@react-three/drei";
+import { useLoader } from "@react-three/fiber";
+import { GLTFLoader, ThreeMFLoader } from "three-stdlib";
 
-export function Model(opts: any) {
-	const group = useRef();
-	const { nodes, materials, animations } = useGLTF("/car.glb");
-	const { actions } = useAnimations(animations, group);
-
-	useEffect(() => {
-		if (actions) {
-			actions["Idle.1"]?.reset().play();
-		}
-	}, [actions]);
-
+export default function Model(props: JSX.IntrinsicElements["group"]) {
+	const fish = useLoader(ThreeMFLoader, "koifish.3mf");
 	return (
-		<group ref={group} position-y={-1.25}>
-			<primitive rotation={[-Math.PI / 2, 0, 0]} object={nodes._rootJoint} />
-			<skinnedMesh
-				geometry={nodes.Fish.geometry}
-				material={materials.Mat_Robot}
-				skeleton={nodes.Fish.skeleton}
-			>
-				<Wireframe {...opts} />
-			</skinnedMesh>
+		<group {...props} dispose={null}>
+			<primitive scale={0.05} object={fish}>
+				<wireframeGeometry />
+			</primitive>
+
+			<meshBasicMaterial wireframe={true} />
 		</group>
 	);
 }
-useGLTF.preload("/car.glb");
+
+useGLTF.preload("/fish-transformed.glb");
