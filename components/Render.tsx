@@ -1,7 +1,8 @@
 "use client";
 import { Html, OrbitControls, useProgress } from "@react-three/drei";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { useControls } from "leva";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
 	Box3,
 	type BufferAttribute,
@@ -22,6 +23,8 @@ import {
 	Vector3,
 	type WebGLProgramParametersWithUniforms,
 } from "three";
+
+import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/Addons.js";
 
 type Props = {
@@ -37,11 +40,16 @@ type Uniform = {
 };
 
 function Fish(props: Props) {
-	const meshRef = useRef<Mesh>(null);
+	const backgrounMeshRef = useRef<Mesh>(null);
+	const forgroundMeshRef = useRef<Mesh>(null);
 	const [oUs, setOUs] = useState<Uniform[]>([]);
+	const [curve, setCurve] = useState<CatmullRomCurve3>();
+	const clock = useRef(new Clock());
+	const fish = useLoader(STLLoader, "fish.stl");
 
-	function vertexShader(shader: WebGLProgramParametersWithUniforms) {
-		const vertexShader = `
+	const vertexShader = useCallback(
+		(shader: WebGLProgramParametersWithUniforms) => {
+			const vertexShader = `
 		uniform sampler2D uSpatialTexture;
 		uniform vec2 uTextureSize;
 		uniform float uTime;
@@ -66,106 +74,102 @@ function Fish(props: Props) {
   		${shader.vertexShader}
 		`;
 
-		return vertexShader;
-	}
+			return vertexShader;
+		},
+		[],
+	);
 
 	useEffect(() => {
-		const loader = new STLLoader();
-		loader.load("fish.stl", (objGeom) => {
-			console.log(objGeom);
-			//objGeom.rotateX(-MathPI * 0.5);
-
-			// path
-			const baseVector = new Vector3(40, 0, 0);
-			const axis = new Vector3(0, 1, 0);
-			const cPts = [];
-			const cSegments = 6;
-			const cStep = (Math.PI * 2) / cSegments;
-			for (let i = 0; i < cSegments; i++) {
-				cPts.push(
-					new Vector3()
-						.copy(baseVector)
-						//.setLength(35 + (Math.random() - 0.5) * 5)
-						.applyAxisAngle(axis, cStep * i)
-						.setY(MathUtils.randFloat(-10, 10)),
-				);
-			}
-			const curve = new CatmullRomCurve3(cPts);
-			curve.closed = true;
-
-			console.log(curve);
-
-			const numPoints = 511;
-			const cPoints = curve.getSpacedPoints(numPoints);
-			const cObjects = curve.computeFrenetFrames(numPoints, true);
-			console.log(cObjects);
-			const pGeom = new BufferGeometry().setFromPoints(cPoints);
-			const pMat = new LineBasicMaterial({ color: "yellow" });
-			const pathLine = new Line(pGeom, pMat);
-			meshRef.current?.add(pathLine);
-
-			// data texture
-			const data = [];
-			for (const v of cPoints) {
-				data.push(v.x, v.y, v.z);
-			}
-			for (const v of cObjects.binormals) {
-				data.push(v.x, v.y, v.z);
-			}
-			for (const v of cObjects.normals) {
-				data.push(v.x, v.y, v.z);
-			}
-			for (const v of cObjects.tangents) {
-				data.push(v.x, v.y, v.z);
-			}
-
-			const dataArray = new Float32Array(data);
-
-			const tex = new DataTexture(
-				dataArray,
-				numPoints + 1,
-				4,
-				RGBFormat,
-				FloatType,
+		// path
+		const baseVector = new Vector3(40, 0, 0);
+		const axis = new Vector3(0, 1, 0);
+		const cPts = [];
+		const cSegments = 6;
+		const cStep = (Math.PI * 2) / cSegments;
+		for (let i = 0; i < cSegments; i++) {
+			cPts.push(
+				new Vector3()
+					.copy(baseVector)
+					// .setLength(35 + (Math.random() - 0.5) * 5)
+					.applyAxisAngle(axis, cStep * i)
+					.setY(MathUtils.randFloat(-10, 10)),
 			);
-			tex.magFilter = NearestFilter;
-			console.log(tex);
+		}
+		const curve = new CatmullRomCurve3(cPts);
+		curve.closed = true;
+		setCurve(curve);
 
-			objGeom.center();
-			objGeom.rotateX(-Math.PI * 0.5);
-			objGeom.scale(0.5, 0.5, 0.5);
-			const objBox = new Box3().setFromBufferAttribute(
-				objGeom.getAttribute("position") as BufferAttribute,
-			);
-			const objSize = new Vector3();
-			objBox.getSize(objSize);
-			//objGeom.translate(0, 0, objBox.z);
+		console.log(curve);
 
-			const objUniforms = {
-				uSpatialTexture: { value: tex },
-				uTextureSize: { value: new Vector2(numPoints + 1, 4) },
-				uTime: { value: 0 },
-				uLengthRatio: { value: objSize.z / curve.getLength() }, // more or less real length along the path
-				uObjSize: { value: objSize }, // lenght
-			};
-			oUs.push(objUniforms);
+		const numPoints = 511;
+		const cPoints = curve.getSpacedPoints(numPoints);
+		const cObjects = curve.computeFrenetFrames(numPoints, true);
+		const pGeom = new BufferGeometry().setFromPoints(cPoints);
+		const pMat = new LineBasicMaterial({ color: "yellow" });
+		const pathLine = new Line(pGeom, pMat);
+		if (!backgrounMeshRef.current?.children.includes(pathLine))
+			backgrounMeshRef.current?.add(pathLine);
 
-			const objMat = new MeshBasicMaterial({
-				color: 0xff6600,
-				wireframe: true,
-			});
-			objMat.onBeforeCompile = (shader) => {
-				shader.uniforms.uSpatialTexture = objUniforms.uSpatialTexture;
-				shader.uniforms.uTextureSize = objUniforms.uTextureSize;
-				shader.uniforms.uTime = objUniforms.uTime;
-				shader.uniforms.uLengthRatio = objUniforms.uLengthRatio;
-				shader.uniforms.uObjSize = objUniforms.uObjSize;
+		// data texture
+		const data = [];
+		for (const v of cPoints) {
+			data.push(v.x, v.y, v.z);
+		}
+		for (const v of cObjects.binormals) {
+			data.push(v.x, v.y, v.z);
+		}
+		for (const v of cObjects.normals) {
+			data.push(v.x, v.y, v.z);
+		}
+		for (const v of cObjects.tangents) {
+			data.push(v.x, v.y, v.z);
+		}
 
-				shader.vertexShader = vertexShader(shader);
-				shader.vertexShader = shader.vertexShader.replace(
-					"#include <begin_vertex>",
-					`#include <begin_vertex>
+		const dataArray = new Float32Array(data);
 
+		const tex = new DataTexture(
+			dataArray,
+			numPoints + 1,
+			4,
+			RGBFormat,
+			FloatType,
+		);
+		tex.magFilter = NearestFilter;
+
+		fish.center();
+		fish.rotateX(-0.6);
+		const objBox = new Box3().setFromBufferAttribute(
+			fish.getAttribute("position") as BufferAttribute,
+		);
+		const objSize = new Vector3();
+		objBox.getSize(objSize);
+
+		const objUniforms = {
+			uSpatialTexture: { value: tex },
+			uTextureSize: { value: new Vector2(numPoints + 1, 4) },
+			uTime: { value: 0 },
+			uLengthRatio: { value: objSize.z / curve.getLength() },
+			uObjSize: { value: objSize },
+		};
+
+		setOUs((curr) => [...curr, objUniforms]);
+
+		const objMat = new MeshBasicMaterial({
+			color: 0xff6600,
+			wireframe: true,
+		});
+
+		objMat.onBeforeCompile = (shader) => {
+			shader.uniforms.uSpatialTexture = objUniforms.uSpatialTexture;
+			shader.uniforms.uTextureSize = objUniforms.uTextureSize;
+			shader.uniforms.uTime = objUniforms.uTime;
+			shader.uniforms.uLengthRatio = objUniforms.uLengthRatio;
+			shader.uniforms.uObjSize = objUniforms.uObjSize;
+
+			shader.vertexShader = vertexShader(shader);
+			shader.vertexShader = shader.vertexShader.replace(
+				"#include <begin_vertex>;",
+				`#include <begin_vertex>;
 					vec3 pos = position;
 
 					float wStep = 1. / uTextureSize.x;
@@ -188,24 +192,39 @@ function Fish(props: Props) {
 					vec3 N = mix(splinePrev.normal, splineNext.normal, f);
 
 					transformed = P + (N * pos.x) + (B * pos.y);`,
-				);
-				console.log(shader.vertexShader);
-			};
-			const obj = new Mesh(objGeom, objMat);
-			meshRef.current?.add(obj);
-		});
-	}, []);
+			);
+		};
 
-	const clock = new Clock();
+		const obj = new Mesh(fish, objMat);
+		forgroundMeshRef.current?.add(obj);
+	}, [vertexShader, fish]);
 
-	useFrame(() => {
-		const t = clock.getElapsedTime();
-		for (const ou of oUs) {
-			ou.uTime.value = t;
+	useFrame((state, delta) => {
+		if (curve && forgroundMeshRef.current) {
+			// Update the clock using delta
+			const elapsedTime = (clock.current?.getElapsedTime() || 0) + delta;
+			const t = (elapsedTime % 10) / 10; // Normalize time to [0, 1]
+
+			// Update uniforms
+			for (const ou of oUs) {
+				ou.uTime.value = t;
+			}
+
+			// Get position and tangent at the current time
+			const position = curve.getPointAt(t);
+			const tangent = curve.getTangentAt(t);
+
+			// Update position
+			forgroundMeshRef.current.position.copy(position);
+			forgroundMeshRef.current.lookAt(position.clone().add(tangent));
 		}
 	});
 
-	return <mesh ref={meshRef} {...props} />;
+	return (
+		<mesh ref={backgrounMeshRef} {...props}>
+			<mesh scale={0.5} ref={forgroundMeshRef} {...props} />
+		</mesh>
+	);
 }
 
 function Loader() {
