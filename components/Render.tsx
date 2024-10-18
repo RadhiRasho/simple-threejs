@@ -19,8 +19,6 @@ import {
 	MeshBasicMaterial,
 	NearestFilter,
 	RGBFormat,
-	Skeleton,
-	type Vector2,
 	Vector3,
 } from "three";
 
@@ -28,14 +26,6 @@ import { STLLoader } from "three/examples/jsm/Addons.js";
 
 type Props = {
 	position: [number, number, number];
-};
-
-type Uniform = {
-	uSpatialTexture: { value: DataTexture };
-	uTextureSize: { value: Vector2 };
-	uTime: { value: number };
-	uLengthRatio: { value: number };
-	uObjSize: { value: Vector3 };
 };
 
 function Fish(props: Props) {
@@ -57,7 +47,6 @@ function Fish(props: Props) {
 			cPts.push(
 				new Vector3()
 					.copy(baseVector)
-					.setLength(35 + (Math.random() - 0.5) * 5)
 					.applyAxisAngle(axis, cStep * i)
 					.setY(MathUtils.randFloat(-10, 10)),
 			);
@@ -72,7 +61,7 @@ function Fish(props: Props) {
 		const pGeom = new BufferGeometry().setFromPoints(cPoints);
 		const pMat = new LineBasicMaterial({ color: "yellow" });
 		const pathLine = new Line(pGeom, pMat);
-		backgrounMeshRef.current?.add(pathLine);
+		// backgrounMeshRef.current?.add(pathLine);
 
 		// data texture
 		const data = [];
@@ -175,7 +164,7 @@ export default function Render() {
 					enableZoom={true}
 					maxPolarAngle={Math.PI / 2}
 				/>
-				<color attach={"background"} args={["white"]} />
+				<color attach={"background"} args={["black"]} />
 				<ambientLight intensity={0.1} />
 				<directionalLight position={[10, 10, 10]} intensity={0.5} />
 				<directionalLight
