@@ -7,6 +7,7 @@ import {
 	Box3,
 	type BufferAttribute,
 	BufferGeometry,
+	type Camera,
 	CatmullRomCurve3,
 	Clock,
 	DataTexture,
@@ -18,11 +19,13 @@ import {
 	Mesh,
 	MeshBasicMaterial,
 	NearestFilter,
+	PointLight,
 	RGBFormat,
 	Vector3,
 } from "three";
 
-import { STLLoader } from "three/examples/jsm/Addons.js";
+import { GLTFLoader, STLLoader } from "three/examples/jsm/Addons.js";
+import { Model } from "./Fish";
 
 type Props = {
 	position: [number, number, number];
@@ -34,7 +37,7 @@ function Fish(props: Props) {
 	const [bones, setBones] = useState<Bone[]>([]);
 	const [curve, setCurve] = useState<CatmullRomCurve3>();
 	const clock = useRef(new Clock(true));
-	const fish = useLoader(STLLoader, "fish.stl");
+	const fish = useLoader(STLLoader, "koifish.stl");
 
 	useEffect(() => {
 		// path
@@ -61,7 +64,7 @@ function Fish(props: Props) {
 		const pGeom = new BufferGeometry().setFromPoints(cPoints);
 		const pMat = new LineBasicMaterial({ color: "yellow" });
 		const pathLine = new Line(pGeom, pMat);
-		// backgrounMeshRef.current?.add(pathLine);
+		backgrounMeshRef.current?.add(pathLine);
 
 		// data texture
 		const data = [];
@@ -142,6 +145,7 @@ function Fish(props: Props) {
 	return (
 		<mesh scale={0.15} ref={backgrounMeshRef} {...props}>
 			<mesh scale={0.15} ref={forgroundMeshRef} {...props} />
+			<Model />
 		</mesh>
 	);
 }
@@ -150,36 +154,18 @@ function Loader() {
 	const { progress } = useProgress();
 	return <Html center>{progress} % loaded</Html>;
 }
-
 export default function Render() {
 	return (
 		<Canvas
-			dpr={[1, 1.5]}
-			camera={{ position: [0, 0, 15], fov: 25 }}
-			className="h-full w-full"
+			className="h-full w-full max-h-screen max-w-screen"
+			camera={{ fov: 15, position: [0, 0, 50] }}
 		>
 			<Suspense fallback={<Loader />}>
 				<OrbitControls
+					position={[0, 0, 50]}
 					enablePan={true}
 					enableZoom={true}
-					maxPolarAngle={Math.PI / 2}
 				/>
-				<color attach={"background"} args={["black"]} />
-				<ambientLight intensity={0.1} />
-				<directionalLight position={[10, 10, 10]} intensity={0.5} />
-				<directionalLight
-					castShadow
-					position={[10, 10, 10]}
-					intensity={1.3}
-					shadow-mapSize-width={1024}
-					shadow-mapSize-height={1024}
-					shadow-camera-far={10}
-					shadow-camera-left={-30}
-					shadow-camera-right={10}
-					shadow-camera-top={40}
-					shadow-camera-bottom={-10}
-				/>
-				<spotLight intensity={0.5} position={[90, 100, 50]} castShadow />
 				<Fish position={[0, 0, 0]} />
 			</Suspense>
 		</Canvas>
