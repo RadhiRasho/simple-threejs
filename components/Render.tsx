@@ -144,7 +144,7 @@ function Fish(props: Props) {
 
 	return (
 		<mesh scale={0.15} ref={backgrounMeshRef} {...props}>
-			<mesh scale={0.15} ref={forgroundMeshRef} {...props} />
+			{/* <mesh scale={0.15} ref={forgroundMeshRef} {...props} /> */}
 			<Model />
 		</mesh>
 	);

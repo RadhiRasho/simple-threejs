@@ -1,18 +1,10 @@
 import { useAnimations, useGLTF } from "@react-three/drei";
-import { useFrame, useGraph } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
-import {
-	type AnimationClip,
-	type Bone,
-	type Color,
-	type Group,
-	Mesh,
-	MeshBasicMaterial,
-	type SkinnedMesh,
-} from "three";
-import { type GLTF, SkeletonUtils } from "three-stdlib";
+import { useFrame } from "@react-three/fiber";
+import { useRef } from "react";
+import type { AnimationClip, Group, Material, Mesh } from "three";
+import type { GLTF } from "three-stdlib";
 
-type ActionName = "ArmatureAction";
+type ActionName = "PlaneAction" | "fishAction";
 
 interface GLTFAction extends AnimationClip {
 	name: ActionName;
@@ -20,48 +12,52 @@ interface GLTFAction extends AnimationClip {
 
 type GLTFResult = GLTF & {
 	nodes: {
-		fish: SkinnedMesh;
-		Bone: Bone;
+		Plane: Mesh;
+		fish: Mesh;
 	};
-	materials: Record<string, MeshBasicMaterial>;
+	materials: Record<string, Material>;
 	animations: GLTFAction[];
 };
 
 export function Model(props: JSX.IntrinsicElements["group"]) {
 	const group = useRef<Group>(null);
-	const { scene, animations } = useGLTF("/koifish.glb");
-	const clone = useMemo(() => SkeletonUtils.clone(scene), [scene]);
-	const { nodes } = useGraph(clone) as unknown as GLTFResult;
+	const { nodes, animations } = useGLTF(
+		"/koifish.glb",
+	) as unknown as GLTFResult;
 	const { actions } = useAnimations(animations, group);
 
-	const wireframeMaterial = new MeshBasicMaterial({
-		wireframe: true,
-		color: 0xff6600,
-	});
-
-	if (nodes.fish.material) {
-		nodes.fish.material = wireframeMaterial;
-	}
-
 	useFrame((state, delta) => {
-		if (actions.ArmatureAction) {
-			actions.ArmatureAction.clampWhenFinished = true;
-			actions.ArmatureAction.play();
+		// Ensure the actions are being played in the useFrame hook
+
+		if (actions.PlaneAction) {
+			actions.PlaneAction.play();
+		}
+
+		if (actions.fishAction) {
+			actions.fishAction.play();
 		}
 	});
 
 	return (
 		<group ref={group} {...props} dispose={null}>
 			<group name="Scene">
-				<group name="Armature" position={[-11.357, -0.847, 38.177]}>
-					<primitive object={nodes.Bone} />
-					<skinnedMesh
+				<mesh
+					name="Plane"
+					geometry={nodes.Plane.geometry}
+					material={nodes.Plane.material}
+					position={[1.686, 12.954, -12.366]}
+					rotation={[0, 0.047, -Math.PI / 2]}
+					scale={[6.085, 3.356, 17.66]}
+				>
+					<mesh
 						name="fish"
 						geometry={nodes.fish.geometry}
 						material={nodes.fish.material}
-						skeleton={nodes.fish.skeleton}
+						position={[0.116, 0.282, 0.156]}
+						rotation={[0.124, 0.116, 1.578]}
+						scale={[0.147, 0.077, 0.02]}
 					/>
-				</group>
+				</mesh>
 			</group>
 		</group>
 	);

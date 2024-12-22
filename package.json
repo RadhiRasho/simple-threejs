@@ -10,7 +10,7 @@
 	},
 	"dependencies": {
 		"@biomejs/biome": "^1.9.4",
-		"@react-three/drei": "^9.114.4",
+		"@react-three/drei": "^9.114.5",
 		"@react-three/fiber": "^8.17.10",
 		"@types/three": "^0.169.0",
 		"leva": "^0.9.35",
