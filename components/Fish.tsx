@@ -1,6 +1,6 @@
 import { useAnimations, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useRef, type JSX } from "react";
 import type { AnimationClip, Group, Material, Mesh } from "three";
 import type { GLTF } from "three-stdlib";
 

@@ -7,7 +7,6 @@ import {
 	Box3,
 	type BufferAttribute,
 	BufferGeometry,
-	type Camera,
 	CatmullRomCurve3,
 	Clock,
 	DataTexture,
@@ -19,13 +18,11 @@ import {
 	Mesh,
 	MeshBasicMaterial,
 	NearestFilter,
-	PointLight,
 	RGBFormat,
 	Vector3,
 } from "three";
 
-import { GLTFLoader, STLLoader } from "three/examples/jsm/Addons.js";
-import { Model } from "./Fish";
+import { STLLoader } from "three/examples/jsm/Addons.js";
 
 type Props = {
 	position: [number, number, number];
@@ -64,7 +61,7 @@ function Fish(props: Props) {
 		const pGeom = new BufferGeometry().setFromPoints(cPoints);
 		const pMat = new LineBasicMaterial({ color: "yellow" });
 		const pathLine = new Line(pGeom, pMat);
-		backgrounMeshRef.current?.add(pathLine);
+		// backgrounMeshRef.current?.add(pathLine);
 
 		// data texture
 		const data = [];
@@ -122,7 +119,7 @@ function Fish(props: Props) {
 		forgroundMeshRef.current?.add(fishObject);
 	}, [fish]);
 
-	useFrame((state, delta) => {
+	useFrame(() => {
 		if (curve && forgroundMeshRef.current) {
 			// Update the clock using delta
 			const elapsedTime = (clock.current.getElapsedTime() % 15) / 15;
@@ -143,9 +140,8 @@ function Fish(props: Props) {
 	});
 
 	return (
-		<mesh scale={0.15} ref={backgrounMeshRef} {...props}>
-			{/* <mesh scale={0.15} ref={forgroundMeshRef} {...props} /> */}
-			<Model />
+		<mesh scale={0.20} ref={backgrounMeshRef} {...props}>
+			<mesh scale={0.20} ref={forgroundMeshRef} {...props} />
 		</mesh>
 	);
 }
@@ -163,7 +159,9 @@ export default function Render() {
 			<Suspense fallback={<Loader />}>
 				<OrbitControls
 					position={[0, 0, 50]}
-					enablePan={true}
+					enablePan={false}
+					autoRotate={false}
+					enableRotate={false} // Disable rotation
 					enableZoom={true}
 				/>
 				<Fish position={[0, 0, 0]} />

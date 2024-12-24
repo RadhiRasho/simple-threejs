@@ -1,31 +1,37 @@
 {
-	"name": "simple-threejs",
-	"version": "0.1.0",
-	"private": true,
-	"scripts": {
-		"dev": "next dev --turbo",
-		"build": "next build",
-		"start": "next start",
-		"lint": "next lint"
-	},
-	"dependencies": {
-		"@biomejs/biome": "^1.9.4",
-		"@react-three/drei": "^9.114.5",
-		"@react-three/fiber": "^8.17.10",
-		"@types/three": "^0.169.0",
-		"leva": "^0.9.35",
-		"next": "14.2.15",
-		"react": "^18.3.1",
-		"react-dom": "^18.3.1",
-		"three": "^0.169.0"
-	},
-	"devDependencies": {
-		"typescript": "^5.6.3",
-		"@types/node": "^20.16.12",
-		"@types/react": "^18.3.11",
-		"@types/react-dom": "^18.3.1",
-		"postcss": "^8.4.47",
-		"tailwindcss": "^3.4.14"
-	},
-	"trustedDependencies": ["@biomejs/biome"]
+  "name": "simple-threejs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@react-three/drei": "^9.120.4",
+    "@react-three/fiber": "^8.17.10",
+    "@types/three": "^0.169.0",
+    "leva": "^0.9.35",
+    "next": "15.1.2",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "@types/node": "^20.17.10",
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17"
+  },
+  "trustedDependencies": [
+    "@biomejs/biome"
+  ],
+  "overrides": {
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2"
+  }
 }
